@@ -145,7 +145,3 @@ To deploy the SmartBrain API, consider using platforms like [Render](https://ren
 ## 11. Contributing
 
 Contributions are welcome! Please fork the repository and create a pull request with your changes. Ensure your code follows the project's coding standards and includes appropriate tests.
-
-For a visual demonstration of the SmartBrain application, you can watch the following video:
-
- 
