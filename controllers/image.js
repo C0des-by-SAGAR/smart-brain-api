@@ -1,54 +1,64 @@
-const fetch = require('node-fetch');
+const { ClarifaiStub, grpc } = require("clarifai-nodejs-grpc");
 
+// Initialize Clarifai gRPC stub
+const stub = ClarifaiStub.grpc();
+
+// Setup metadata with your PAT
+const metadata = new grpc.Metadata();
+metadata.set("authorization", "Key " + process.env.CLARIFAI_PAT);
+
+// Handles Clarifai API Call
 const handleApiCall = (req, res) => {
-  const raw = JSON.stringify({
-    "user_app_id": {
-      "user_id": "clarifai",   // default public user
-      "app_id": "main"         // default app
-    },
-    "inputs": [
-      {
-        "data": {
-          "image": {
-            "url": req.body.input
+  const { input } = req.body;
+
+  stub.PostModelOutputs(
+    {
+      user_app_id: {
+        user_id: "clarifai",  // As per your example
+        app_id: "main"
+      },
+      model_id: "face-detection",
+      version_id: "6dc7e46bc9124c5c8824be4822abe105", // optional but recommended
+      inputs: [
+        {
+          data: {
+            image: {
+              url: input,
+              allow_duplicate_url: true
+            }
           }
         }
-      }
-    ]
-  });
-
-  fetch("https://api.clarifai.com/v2/models/face-detection/versions/6dc7e46bc9124c5c8824be4822abe105/outputs", {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Authorization": "Key " + process.env.CLARIFAI_API_KEY,
-      "Content-Type": "application/json"
+      ]
     },
-    body: raw
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status.code !== 10000) {
-        console.error("Clarifai API error:", data);
-        return res.status(400).json("Unable to work with API");
+    metadata,
+    (err, response) => {
+      if (err) {
+        console.error("Clarifai gRPC error:", err);
+        return res.status(500).json("API call failed: " + err);
       }
-      res.json(data);
-    })
-    .catch(err => {
-      console.error("Clarifai API error:", err);
-      res.status(400).json("Unable to work with API");
-    });
+
+      if (response.status.code !== 10000) {
+        console.error("Clarifai API failure:", response.status);
+        return res.status(500).json("Clarifai API error: " + response.status.description);
+      }
+
+      // Success
+      res.json(response);
+    }
+  );
 };
 
+// Handles Image Count in DB
 const handleImage = (req, res, db) => {
   const { id } = req.body;
-  db('users').where('id', '=', id)
-    .increment('entries', 1)
-    .returning('entries')
+  db("users")
+    .where("id", "=", id)
+    .increment("entries", 1)
+    .returning("entries")
     .then(entries => {
       res.json(entries[0].entries);
     })
-    .catch(err => res.status(400).json('unable to get entries'));
+    .catch(err => res.status(400).json("unable to get entries"));
 };
 
 module.exports = {
