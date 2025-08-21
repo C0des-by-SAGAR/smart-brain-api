@@ -7,42 +7,38 @@ const handleRegister = (req, res, db, bcrypt) => {
     const hash = bcrypt.hashSync(password);
 
     db.transaction(trx => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-        .into('login')
-        .returning('email')
-        .then(loginEmail => {
-            console.log('DEBUG returning loginEmail:', loginEmail);
+        return trx('login')
+            .insert({
+                hash: hash,
+                email: email
+            })
+            .returning('email')
+            .then(loginEmail => {
+                console.log('DEBUG returning loginEmail:', loginEmail);
 
-            // Handle both cases: [{ email: 'x' }] or ['x']
-            // const emailValue = loginEmail[0].email ? loginEmail[0].email : loginEmail[0];
+                // Handle both formats
+                const emailValue =
+                    loginEmail[0].email ? loginEmail[0].email : loginEmail[0];
 
-            return trx('users')
-                .returning('*')
-                .insert({
-                    email: loginEmail[0].email,
-                    name: name,
-                    joined: new Date()
-                })
-                .then(user => {
-                    console.log('DEBUG user inserted:', user);
-                    res.json(user[0]);
-                });
-        })
-        .then(trx.commit)
-        .catch(err => {
-            console.error('DEBUG transaction error:', err);
-            trx.rollback();
-        });
+                return trx('users')
+                    .insert({
+                        email: emailValue,
+                        name: name,
+                        joined: new Date()
+                    })
+                    .returning('*');
+            })
+            .then(user => {
+                console.log('DEBUG user inserted:', user);
+                res.json(user[0]);
+            });
     })
     .catch(err => {
-        console.error('DEBUG outer catch error:', err);
+        console.error('Register error:', err);
         res.status(400).json('unable to register');
     });
 };
 
 module.exports = {
-	handleRegister: handleRegister
+    handleRegister
 };
