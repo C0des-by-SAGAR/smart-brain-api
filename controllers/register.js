@@ -17,12 +17,12 @@ const handleRegister = (req, res, db, bcrypt) => {
             console.log('DEBUG returning loginEmail:', loginEmail);
 
             // Handle both cases: [{ email: 'x' }] or ['x']
-            const emailValue = loginEmail[0].email ? loginEmail[0].email : loginEmail[0];
+            // const emailValue = loginEmail[0].email ? loginEmail[0].email : loginEmail[0];
 
             return trx('users')
                 .returning('*')
                 .insert({
-                    email: emailValue,
+                    email: loginEmail[0].email,
                     name: name,
                     joined: new Date()
                 })
