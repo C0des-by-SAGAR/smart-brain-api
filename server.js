@@ -40,8 +40,13 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // FRONTEND_URL should be set to your deployed frontend URL
-const FRONTEND_URL = process.env.FRONTEND_URL || '*';
-app.use(cors({ origin: FRONTEND_URL, optionsSuccessStatus: 200 }));
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+app.use(cors({
+  origin: [FRONTEND_URL, 'http://localhost:3000', 'https://smart-brain-lovat.vercel.app'], 
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 
 app.use(express.json());
 
