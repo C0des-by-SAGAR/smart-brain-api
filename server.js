@@ -16,14 +16,16 @@ const app = express();
 // ---- DB: use DATABASE_URL in production or local config in dev ----
 const db = knex({
 	client: 'pg',
-	connection: process.env.DATABASE_URL ? process.env.DATABASE_URL : {
+	connection: process.env.DATABASE_URL ? {
+		connectionString: process.env.DATABASE_URL,
+		ssl: { rejectUnauthorized: false }
+	} : {
 		host: process.env.PGHOST || '127.0.0.1',
 		port: process.env.PGPORT || 5432,
 		user: process.env.PGUSER || 'postgres',
 		password: process.env.PGPASSWORD || 'sagar@tyson007',
 		database: process.env.PGDATABASE || 'smartbrain'
-	},
-	ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+	}
 });
 
 if (process.env.DATABASE_URL) {
